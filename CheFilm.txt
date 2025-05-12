@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheFilm?</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    h1 {
+      color: #333;
+    }
+    select, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .movie-container {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CheFilm?</h1>
+  <p>Seleziona un genere e ricevi un consiglio!</p>
+  <select id="genre">
+    <option value="28">Azione</option>
+    <option value="35">Commedia</option>
+    <option value="27">Horror</option>
+    <option value="18">Drammatico</option>
+    <option value="10749">Romantico</option>
+    <option value="16">Animazione</option>
+  </select>
+  <button onclick="getMovie()">Consigliami un film!</button>
+
+  <div id="movie" class="movie-container"></div>
+
+  <script>
+    const apiKey = '7b9c8d8f56c2a644f21d5ad4db5339ba';
+
+    async function getMovie() {
+      const genre = document.getElementById('genre').value;
+      const res = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=${genre}&language=it-IT`);
+      const data = await res.json();
+      const movies = data.results;
+      if (movies.length === 0) return;
+      const randomMovie = movies[Math.floor(Math.random() * movies.length)];
+
+      document.getElementById('movie').innerHTML = `
+        <h2>${randomMovie.title}</h2>
+        <img src="https://image.tmdb.org/t/p/w500${randomMovie.poster_path}" alt="${randomMovie.title}">
+        <p>${randomMovie.overview}</p>
+        <p><strong>Voto medio:</strong> ${randomMovie.vote_average}/10</p>
+      `;
+    }
+  </script>
+</body>
+</html>
