@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheFilm?</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2e2e2e;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #f1f1f1;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        select, input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            transition: background-color 0.3s ease;
+            background-color: #444;
+            color: white;
+        }
+
+        select:focus, input:focus, button:focus {
+            outline: none;
+            background-color: #555;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .movie-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .movie-card {
+            width: 250px;
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .movie-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .movie-card h3 {
+            color: #f1f1f1;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .movie-card p {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .loader {
+            margin: 50px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .history-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .history-card {
+            width: 100px;
+            text-align: center;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .history-card img {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .history-card p {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .clear-history-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .clear-history-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>CheFilm?</h1>
+    <p>Seleziona un genere, una fascia di anni e goditi il film!</p>
+
+    <select id="genre">
+        <option value="28">Azione</option>
+        <option value="12">Avventura</option>
+        <option value="16">Animazione</option>
+        <option value="35">Commedia</option>
+        <option value="80">Crime</option>
+        <option value="99">Documentario</option>
+        <option value="18">Drammatico</option>
+        <option value="10751">Famiglia</option>
+        <option value="14">Fantasy</option>
+        <option value="36">Storico</option>
+        <option value="27">Horror</option>
+        <option value="10402">Musica</option>
+        <option value="9648">Mistero</option>
+        <option value="10749">Romantico</option>
+        <option value="878">Fantascienza</option>
+        <option value="10770">Film TV</option>
+        <option value="53">Thriller</option>
+        <option value="10752">Guerra</option>
+        <option value="37">Western</option>
+    </select>
+
+    <input type="number" id="startYear" placeholder="Anno di inizio (es. 2010)" min="1900" max="2025">
+    <input type="number" id="endYear" placeholder="Anno di fine (es. 2020)" min="1900" max="2025">
+    <button onclick="getMovie()">Consigliami un film!</button>
+
+    <div id="loader" class="loader" style="display: none;"></div>
+    <div id="movie" class="movie-container"></div>
+
+    <h2>Cronologia</h2>
+    <button class="clear-history-btn" onclick="clearHistory()">Cancella cronologia</button>
+    <div id="history" class="history-container"></div>
+
+    <script>
+        const apiKey = '7b9c8d8f56c2a644f21d5ad4db5339ba';
+
+        const providerLinks = {
+            "Netflix": "https://www.netflix.com",
+            "Amazon Prime Video": "https://www.primevideo.com",
+            "Disney Plus": "https://www.disneyplus.com",
+            "NOW": "https://www.nowtv.it",
+            "Apple TV Plus": "https://tv.apple.com",
+            "Paramount Plus": "https://www.paramountplus.com",
+            "Infinity": "https://www.mediasetplay.mediaset.it",
+            "Rakuten TV": "https://rakuten.tv"
+        };
+
+        async function getMovie() {
+            const genre = document.getElementById('genre').value;
+            const startYear = document.getElementById('startYear').value;
+            const endYear = document.getElementById('endYear').value;
+
+            if (startYear && endYear && parseInt(startYear) > parseInt(endYear)) {
+                alert("L'anno di inizio non può essere maggiore dell'anno di fine.");
+                return;
+            }
+
+            let url = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=${genre}&language=it-IT`;
+            if (startYear && endYear) {
+                url += `&primary_release_date.gte=${startYear}-01-01&primary_release_date.lte=${endYear}-12-31`;
+            }
+
+            const loader = document.getElementById('loader');
+            loader.style.display = 'block';
+            document.getElementById('movie').innerHTML = '';
+
+            const res = await fetch(url);
+            const data = await res.json();
+            let movies = data.results;
+
+            if (movies.length === 0) {
+                loader.style.display = 'none';
+                document.getElementById('movie').innerHTML = `<p>Nessun film trovato.</p>`;
+                return;
+            }
+
+            movies = shuffleArray(movies).slice(0, 3);
+
+            const movieContainer = document.getElementById('movie');
+            for (const movie of movies) {
+                const posterUrl = movie.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                    : 'https://via.placeholder.com/500x750?text=Nessuna+immagine';
+
+                const releaseDate = movie.release_date
+                    ? new Date(movie.release_date).toLocaleDateString('it-IT')
+                    : 'Data non disponibile';
+
+                const providerRes = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/watch/providers?api_key=${apiKey}`);
+                const providerData = await providerRes.json();
+                const providers = providerData.results?.IT?.flatrate;
+
+                let providerInfo = '<p><strong>Disponibile su:</strong> Nessuna informazione trovata.</p>';
+                if (providers && providers.length > 0) {
+                    providerInfo = `
+                        <p><strong>Disponibile su:</strong></p>
+                        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px;">
+                            ${providers.map(p => {
+                                const link = providerLinks[p.provider_name] || '#';
+                                return `
+                                    <a href="${link}" target="_blank">
+                                        <img src="https://image.tmdb.org/t/p/w45${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}" style="width: 60px; height: 30px; object-fit: contain;">
+                                    </a>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                const trailerRes = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${apiKey}&language=it-IT`);
+                const trailerData = await trailerRes.json();
+                const trailer = trailerData.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+
+                let trailerHtml = '';
+                if (trailer) {
+                    trailerHtml = `<button onclick="openTrailer('${trailer.key}')">Guarda il Trailer</button>`;
+                } else {
+                    trailerHtml = `<p>Trailer non disponibile.</p>`;
+                }
+
+                const movieHTML = `
+                    <div class="movie-card">
+                        <h3>${movie.title}</h3>
+                        <img src="${posterUrl}" alt="${movie.title}">
+                        <p><strong>Data di uscita:</strong> ${releaseDate}</p>
+                        <p>${movie.overview}</p>
+                        <p><strong>Voto:</strong> ${movie.vote_average}/10</p>
+                        ${providerInfo}
+                        ${trailerHtml}
+                    </div>
+                `;
+                movieContainer.innerHTML += movieHTML;
+
+                saveToHistory(movie); // Salva nella cronologia
+            }
+
+            loader.style.display = 'none';
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Scambia gli elementi
+            }
+            return array;
+        }
+
+        function saveToHistory(movie) {
+            let history = JSON.parse(localStorage.getItem('history')) || [];
+            if (!history.find(item => item.id === movie.id)) {
+                history.push({
+                    id: movie.id,
+                    title: movie.title,
+                    poster: movie.poster_path
+                });
+                localStorage.setItem('history', JSON.stringify(history));
+                renderHistory();
+            }
+        }
+
+        function renderHistory() {
+            const historyContainer = document.getElementById('history');
+            const history = JSON.parse(localStorage.getItem('history')) || [];
+            historyContainer.innerHTML = history.map(item => `
+                <div class="history-card">
+                    <img src="https://image.tmdb.org/t/p/w200${item.poster}" alt="${item.title}">
+                    <p>${item.title}</p>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('history');
+            renderHistory();
+        }
+
+        function openTrailer(key) {
+            const youtubeUrl = `https://www.youtube.com/watch?v=${key}`;
+            window.open(youtubeUrl, '_blank'); // Apre il link in una nuova scheda
+        }
+
+        renderHistory(); // Carica e visualizza la cronologia all'inizio
+    </script>
+</body>
+</html>
